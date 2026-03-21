@@ -73,7 +73,7 @@ func initCollector() (func(context.Context) error, error) {
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceName("serviceName"),
+			semconv.ServiceName("HttpService"),
 		),
 	)
 	if err != nil {
