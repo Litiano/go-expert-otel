@@ -30,6 +30,8 @@ func TemperatureHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 	tracer := otel.Tracer("microservice-tracer")
+	ctx, initialSpan := tracer.Start(ctx, "Start Request")
+	defer initialSpan.End()
 
 	requestId := r.Context().Value(middleware.RequestIDKey).(string)
 	var input dto.TemperatureInput
@@ -45,10 +47,10 @@ func TemperatureHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, span := tracer.Start(ctx, "SPAN_INICIAL_REQUEST_1")
+	ctx, getTemperatureSpan := tracer.Start(ctx, "GetTemperature")
 	resp, err := http2.RequestWithTimeout(ctx, 10*time.Second, "GET", "http://temperature-service:8090/temperature?cep="+input.Cep, nil, requestId)
 	//resp, err := http2.RequestWithTimeout(ctx, 10*time.Second, "GET", "http://127.0.0.1:8090/temperature?cep="+input.Cep, nil, requestId)
-	span.End()
+	getTemperatureSpan.End()
 	if err != nil && resp == nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
