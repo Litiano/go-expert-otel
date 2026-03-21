@@ -20,12 +20,14 @@ func NewTemperatureHandler(config *configs.Conf) *TemperatureHandler {
 func (t *TemperatureHandler) TemperatureHandler(w http.ResponseWriter, r *http.Request) {
 	address, httpError := viacep.GetAddressViaCepApi(r.URL.Query().Get("cep"))
 	if httpError != nil {
+		fmt.Println(httpError)
 		w.WriteHeader(httpError.Code)
 		w.Write([]byte(httpError.Message))
 		return
 	}
 	temperature, httpError := weather.GetTemperature(fmt.Sprintf("%s-%s", address.City, address.State), t.Config.WeatherApiKey)
 	if httpError != nil {
+		fmt.Println(httpError)
 		w.WriteHeader(httpError.Code)
 		w.Write([]byte(httpError.Message))
 		return
@@ -33,6 +35,7 @@ func (t *TemperatureHandler) TemperatureHandler(w http.ResponseWriter, r *http.R
 
 	err := json.NewEncoder(w).Encode(temperature)
 	if err != nil {
+		fmt.Println(httpError)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Json encode error"))
 		return

@@ -9,6 +9,10 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 func validateCep(cep string) error {
@@ -22,6 +26,12 @@ func validateCep(cep string) error {
 	return errors.New("invalid zipcode")
 }
 func TemperatureHandler(w http.ResponseWriter, r *http.Request) {
+	carrier := propagation.HeaderCarrier(r.Header)
+	ctx := r.Context()
+	ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
+	tracer := otel.Tracer("microservice-tracer")
+
+	requestId := r.Context().Value(middleware.RequestIDKey).(string)
 	var input dto.TemperatureInput
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
@@ -35,7 +45,10 @@ func TemperatureHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := http2.RequestWithTimeout(10*time.Second, "GET", "http://temperature-service:8090/temperature?cep="+input.Cep, nil)
+	ctx, span := tracer.Start(ctx, "SPAN_INICIAL_REQUEST_1")
+	resp, err := http2.RequestWithTimeout(ctx, 10*time.Second, "GET", "http://temperature-service:8090/temperature?cep="+input.Cep, nil, requestId)
+	//resp, err := http2.RequestWithTimeout(ctx, 10*time.Second, "GET", "http://127.0.0.1:8090/temperature?cep="+input.Cep, nil, requestId)
+	span.End()
 	if err != nil && resp == nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
