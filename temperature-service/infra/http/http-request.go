@@ -1,0 +1,28 @@
+package http
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+)
+
+func RequestWithTimeout(timeout time.Duration, method, url string, body io.Reader) (*http.Response, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if resp != nil && resp.StatusCode != http.StatusOK {
+		fmt.Println("Error: ", err)
+		return nil, errors.New("Request error with status code: " + resp.Status)
+	}
+
+	return resp, err
+}
