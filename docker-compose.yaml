@@ -8,6 +8,9 @@ services:
       - otel-collector
     ports:
       - "8080:8080"
+    networks:
+      otel-network:
+        ipv4_address: 10.10.10.2
 
   temperature-service:
     build:
@@ -20,6 +23,9 @@ services:
       - "8090:8090"
     env_file:
       - temperature-service/config.env
+    networks:
+      otel-network:
+        ipv4_address: 10.10.10.3
 
   jaeger-all-in-one:
     image: jaegertracing/all-in-one:1.76.0
@@ -27,6 +33,10 @@ services:
       - "16686:16686"
       - "14268"
       - "14250"
+      - "4317"
+    networks:
+      otel-network:
+        ipv4_address: 10.10.10.10
 
   prometheus:
     container_name: prometheus
@@ -35,6 +45,9 @@ services:
       - ./.docker/prometheus.yaml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    networks:
+      otel-network:
+        ipv4_address: 10.10.10.20
 
   otel-collector:
     image: otel/opentelemetry-collector:0.147.0
@@ -45,4 +58,12 @@ services:
       - "8888:8888"   # Prometheus metrics exposed by the collector
       - "8889:8889"   # Prometheus exporter metrics
       - "4317:4317"   # OTLP gRPC receiver
+    networks:
+      otel-network:
+        ipv4_address: 10.10.10.30
 
+networks:
+  otel-network:
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24
