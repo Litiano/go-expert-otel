@@ -21,7 +21,7 @@ func RequestWithTimeout(timeout time.Duration, method, url string, body io.Reade
 	resp, err := http.DefaultClient.Do(req)
 	if resp != nil && resp.StatusCode != http.StatusOK {
 		fmt.Println("Error: ", err)
-		return nil, errors.New("Request error with status code: " + resp.Status)
+		return resp, errors.New("Request error with status code: " + resp.Status)
 	}
 
 	return resp, err

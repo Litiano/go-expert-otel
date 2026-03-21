@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go-expert-otel/http-server/infra/dto"
 	http2 "go-expert-otel/http-server/infra/http"
+	"io"
 	"net/http"
 	"regexp"
 	"time"
@@ -24,7 +25,7 @@ func TemperatureHandler(w http.ResponseWriter, r *http.Request) {
 	var input dto.TemperatureInput
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "invalid zipcode", http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -35,8 +36,13 @@ func TemperatureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := http2.RequestWithTimeout(10*time.Second, "GET", "http://temperature-service:8090/temperature?cep="+input.Cep, nil)
-	if err != nil {
+	if err != nil && resp == nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err != nil && resp != nil {
+		st, _ := io.ReadAll(resp.Body)
+		http.Error(w, string(st), resp.StatusCode)
 		return
 	}
 	defer resp.Body.Close()
