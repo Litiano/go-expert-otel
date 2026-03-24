@@ -9,6 +9,5 @@ curl --location 'http://localhost:8080/temperature' \
     --header 'Content-Type: application/json' \
     --data '{"cep": "12345678"}'
 ```
-#### 5 - Visualize o trace em `http://localhost:16686/search`
-Service: HttpService\
-Find Traces
+#### 5 - Visualize o trace em `http://localhost:9411/zipkin/`
+Run Query
