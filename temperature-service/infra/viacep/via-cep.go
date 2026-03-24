@@ -35,7 +35,8 @@ func GetAddressViaCepApi(cep string) (*AddressViaCepApi, *http2.HttpError) {
 		return nil, http2.NewHttpError("invalid zipcode", http.StatusUnprocessableEntity)
 	}
 
-	resp, err := http2.RequestWithTimeout(10*time.Second, "GET", "https://viacep.com.br/ws/"+cep+"/json", nil)
+	client := http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get("https://viacep.com.br/ws/" + cep + "/json")
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return nil, http2.NewHttpError("error getting address", http.StatusBadRequest)

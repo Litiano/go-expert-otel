@@ -6,6 +6,7 @@ import (
 	http2 "go-exper-otel/temperature/infra/http"
 	"go-exper-otel/temperature/infra/temperature"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -23,8 +24,15 @@ type TemperatureResponse struct {
 }
 
 func GetTemperature(city string, token string) (*TemperatureResponse, *http2.HttpError) {
-	url := fmt.Sprintf("https://api.weatherapi.com/v1/current.json?key=%s&q=%s&aqi=no", token, city)
-	resp, err := http2.RequestWithTimeout(10*time.Second, "GET", url, nil)
+	urlBuilder, _ := url.Parse("https://api.weatherapi.com/v1/current.json")
+	query := urlBuilder.Query()
+	query.Add("q", city)
+	query.Add("key", token)
+	query.Add("aqi", "no")
+	urlBuilder.RawQuery = query.Encode()
+
+	client := http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(urlBuilder.String())
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return nil, http2.NewHttpError("Temperature request error", http.StatusBadRequest)
